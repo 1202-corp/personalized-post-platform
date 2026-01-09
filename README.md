@@ -1,4 +1,4 @@
-# Personalized Post Bot
+# Personalized Post Bot (example: @mmyyyyau_bot)
 
 Telegram-бот для персонализированной агрегации новостей из каналов с использованием ML-рекомендаций на основе векторных эмбеддингов. Микросервисная архитектура на Docker Compose.
 
