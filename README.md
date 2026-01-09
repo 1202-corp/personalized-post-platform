@@ -6,7 +6,7 @@ Telegram-бот для персонализированной агрегации
 
 ```
 ┌─────────────────┐     HTTP/REST      ┌──────────────────┐     Vectors     ┌──────────────┐
-│   main-bot      │◄──────────────────►│  core-api   │◄───────────────►│    Qdrant    │
+│   main-bot      │◄──────────────────►│     core-api     │◄───────────────►│    Qdrant    │
 │   (Aiogram 3)   │                    │  (FastAPI + ML)  │                 │  (embeddings)│
 └────────┬────────┘                    └────────┬─────────┘                 └──────────────┘
          │                                      │
@@ -15,27 +15,26 @@ Telegram-бот для персонализированной агрегации
 ┌─────────────────┐                    ┌──────────────────┐
 │   user-bot      │                    │    postgres      │
 │   (Telethon)    │                    │                  │
-└─────────────────┘                    └──────────────────┘
+└────────────────┘                    └──────────────────┘
          
-┌─────────────────┐      Tunnel        ┌──────────────────┐
-│ frontend-miniapp│◄──────────────────►│   cloudflared    │
-│   (HTML/JS)     │                    │   (HTTPS туннель)│
-└─────────────────┘                    └──────────────────┘
+┌─────────────────┐
+│ frontend-miniapp│
+│   (HTML/JS)     │
+└─────────────────┘
 ```
 
 ## Сервисы
 
-| Сервис | Порт | Описание |
-|--------|------|----------|
-| `core-api` | 8000 | FastAPI бэкенд + ML сервис |
-| `main-bot` | - | Aiogram 3.x Telegram бот (AARRR воронка) |
-| `user-bot` | 8001 | Telethon скрейпер с HTTP API |
-| `frontend-miniapp` | 8080 | Tinder-style интерфейс для оценки постов |
-| `postgres` | 5432 | PostgreSQL база данных |
-| `redis` | 6379 | Redis для кэширования |
-| `qdrant` | 6333 | Векторная БД для эмбеддингов |
-| `tunnel` | - | Cloudflare туннель для MiniApp |
-| `pgadmin` | 5050 | Веб-интерфейс для БД |
+|       Сервис      | Порт |                Описание                  |
+|-------------------|------|------------------------------------------|
+| `core-api`        | 8000 | FastAPI бэкенд + ML сервис               |
+| `main-bot`        | -    | Aiogram 3.x Telegram бот (AARRR воронка) |
+| `user-bot`        | 8001 | Telethon скрейпер с HTTP API             |
+| `frontend-miniapp`| 8080 | Tinder-style интерфейс для оценки постов |
+| `postgres`        | 5432 | PostgreSQL база данных                   |
+| `redis`           | 6379 | Redis для кэширования                    |
+| `qdrant`          | 6333 | Векторная БД для эмбеддингов             |
+| `pgadmin`         | 5050 | Веб-интерфейс для БД                     |
 
 ## Быстрый старт
 
@@ -54,13 +53,13 @@ nano .env
 ```
 
 **Обязательные переменные:**
-| Переменная | Описание |
-|------------|----------|
-| `TELEGRAM_BOT_TOKEN` | Токен бота от BotFather |
-| `TELEGRAM_API_ID` | API ID от my.telegram.org |
-| `TELEGRAM_API_HASH` | API Hash от my.telegram.org |
+|         Переменная        |           Описание         |
+|---------------------------|----------------------------|
+| `TELEGRAM_BOT_TOKEN`      | Токен бота от BotFather    |
+| `TELEGRAM_API_ID`         | API ID от my.telegram.org  |
+| `TELEGRAM_API_HASH`       | API Hash от my.telegram.org|
 | `TELEGRAM_SESSION_STRING` | Сессия Telethon (см. ниже) |
-| `OPENAI_API_KEY` | API ключ для эмбеддингов |
+| `OPENAI_API_KEY`          | API ключ для эмбеддингов   |
 
 ### 3. Генерация Telethon Session
 
@@ -87,13 +86,13 @@ docker-compose up -d main-bot
 
 ### 5. Доступ к сервисам
 
-| URL | Описание |
-|-----|----------|
-| http://localhost:8000/docs | API документация |
-| http://localhost:8080 | MiniApp (локально) |
-| http://localhost:8001/docs | User Bot API |
-| http://localhost:5050 | pgAdmin (БД) |
-| http://localhost:6333/dashboard | Qdrant UI |
+|               URL               |      Описание      |
+|---------------------------------|--------------------|
+| http://localhost:8000/docs      | API документация   |
+| http://localhost:8080           | MiniApp (локально) |
+| http://localhost:8001/docs      | User Bot API       |
+| http://localhost:5050           | pgAdmin (БД)       |
+| http://localhost:6333/dashboard | Qdrant UI          |
 
 ## Пользовательский флоу (AARRR)
 
@@ -210,11 +209,11 @@ docker-compose up -d main-bot
 
 The `MessageManager` class in `main-bot` implements a strict registry pattern for managing three message types:
 
-| Type | Behavior | Example |
-|------|----------|---------|
-| `SYSTEM` | Persistent, edited in place | Main menu |
-| `EPHEMERAL` | Deleted after interaction | Confirmation dialogs |
-| `ONETIME` | Kept in history | Feed posts |
+|     Type    |           Behavior           |        Example       |
+|-------------|------------------------------|----------------------|
+|  `SYSTEM`   | Persistent, edited in place  |        Main menu     |
+| `EPHEMERAL` | Deleted after interaction    | Confirmation dialogs |
+| `ONETIME`   | Kept in history | Feed posts |
 
 Key methods:
 - `send_system()` - Send/edit system message
@@ -274,21 +273,6 @@ curl http://localhost:8000/health/ready
 curl http://localhost:8001/health/ready
 # {"service":"user-bot","telethon":"healthy","core_api":"healthy","status":"healthy"}
 ```
-
-## Конфигурация
-
-| Переменная | По умолчанию | Описание |
-|------------|--------------|----------|
-| `TELEGRAM_BOT_TOKEN` | - | Токен бота (обязательно) |
-| `TELEGRAM_API_ID` | - | API ID (обязательно) |
-| `TELEGRAM_API_HASH` | - | API Hash (обязательно) |
-| `TELEGRAM_SESSION_STRING` | - | Telethon сессия (обязательно) |
-| `OPENAI_API_KEY` | - | Ключ для эмбеддингов (обязательно) |
-| `OPENAI_API_BASE` | `https://bothub.chat/api/v2/openai/v1` | URL API эмбеддингов |
-| `DEFAULT_TRAINING_CHANNELS` | `@durov,@telegram` | Каналы по умолчанию |
-| `RETENTION_CHECK_INTERVAL` | `300` | Интервал проверки retention (сек) |
-| `POSTGRES_USER` | `ppb_user` | Пользователь БД |
-| `POSTGRES_PASSWORD` | `ppb_secret` | Пароль БД |
 
 ## Полезные команды
 
