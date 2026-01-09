@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Post Training</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <h1 data-i18n="title">Rate Posts</h1>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <span class="progress-text" id="progressText">0 / 0</span>
+        </header>
+
+        <!-- Card Stack -->
+        <main class="card-container" id="cardContainer">
+            <!-- Loading State -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p data-i18n="loading">Loading posts...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state hidden" id="emptyState">
+                <div class="empty-icon">🎉</div>
+                <h2 data-i18n="emptyTitle">All Done!</h2>
+                <p data-i18n="emptyText">You've rated all available posts. Press the button below to finish.</p>
+            </div>
+
+            <!-- Card Template (will be cloned) -->
+            <div class="card hidden" id="cardTemplate">
+                <div class="card-content">
+                    <div class="card-source">
+                        <span class="source-icon">📰</span>
+                        <a class="source-name" href="#" target="_blank"></a>
+                    </div>
+                    <div class="card-carousel hidden">
+                        <button class="carousel-btn carousel-prev" type="button">‹</button>
+                        <div class="carousel-track"></div>
+                        <button class="carousel-btn carousel-next" type="button">›</button>
+                        <div class="carousel-dots"></div>
+                    </div>
+                    <div class="card-text"></div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-action btn-dislike" data-action="dislike" title="Dislike">
+                        <span class="icon">👎</span>
+                    </button>
+                    <button class="btn-action btn-skip" data-action="skip" title="Skip">
+                        <span class="icon">⏭️</span>
+                    </button>
+                    <button class="btn-action btn-like" data-action="like" title="Like">
+                        <span class="icon">👍</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Swipe Instructions -->
+        <footer class="instructions" id="instructions">
+            <p data-i18n="instructions">Swipe right to like, left to dislike</p>
+        </footer>
+    </div>
+
+    <!-- Configuration and i18n (load before main script) -->
+    <script src="config.js"></script>
+    <script src="i18n.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

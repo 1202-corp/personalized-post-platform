@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPB Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <h1 class="text-xl font-bold text-gray-900">📊 PPB Admin Dashboard</h1>
+                <div class="flex items-center gap-4">
+                    <span id="lastUpdate" class="text-sm text-gray-500">-</span>
+                    <span id="status" class="px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700">● Загрузка</span>
+                    <button onclick="refresh()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                        <span id="refreshIcon">🔄</span> Обновить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Health Status - First! -->
+        <section class="mb-8">
+            <h2 class="text-lg font-semibold mb-4">🏥 Статус сервисов</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4" id="healthGrid">
+                <div class="bg-white rounded-xl p-4 border animate-pulse">
+                    <div class="h-4 bg-gray-200 rounded w-20 mb-2"></div>
+                    <div class="h-3 bg-gray-200 rounded w-16"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Overview Stats -->
+        <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="text-2xl font-bold text-gray-900" id="statUsers">-</div>
+                <div class="text-xs text-gray-500">Пользователей</div>
+                <div class="text-xs text-green-600 mt-1" id="statUsersTrained">-</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="text-2xl font-bold text-gray-900" id="statChannels">-</div>
+                <div class="text-xs text-gray-500">Каналов</div>
+                <div class="text-xs text-blue-600 mt-1" id="statChannelsDefault">-</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="text-2xl font-bold text-gray-900" id="statPosts">-</div>
+                <div class="text-xs text-gray-500">Постов</div>
+                <div class="text-xs text-purple-600 mt-1" id="statPostsScored">-</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="text-2xl font-bold text-gray-900" id="statInteractions">-</div>
+                <div class="text-xs text-gray-500">Оценок</div>
+                <div class="text-xs text-green-600 mt-1" id="statLikeRate">-</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="text-2xl font-bold text-green-600" id="statLikes">-</div>
+                <div class="text-xs text-gray-500">👍 Лайков</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="text-2xl font-bold text-red-600" id="statDislikes">-</div>
+                <div class="text-xs text-gray-500">👎 Дизлайков</div>
+            </div>
+        </section>
+
+        <!-- ML Metrics -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                <div class="text-xl font-bold text-green-700" id="mlAvgLiked">-</div>
+                <div class="text-xs text-green-600">Avg Score (liked)</div>
+                <div class="text-xs text-gray-500 mt-1">Средний скор лайкнутых</div>
+            </div>
+            <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
+                <div class="text-xl font-bold text-red-700" id="mlAvgDisliked">-</div>
+                <div class="text-xs text-red-600">Avg Score (disliked)</div>
+                <div class="text-xs text-gray-500 mt-1">Средний скор дизлайкнутых</div>
+            </div>
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                <div class="text-xl font-bold text-blue-700" id="mlScoreDiff">-</div>
+                <div class="text-xs text-blue-600">Score Difference</div>
+                <div class="text-xs text-gray-500 mt-1">Разница (чем больше - лучше)</div>
+            </div>
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                <div class="text-xl font-bold text-purple-700" id="mlCoverage">-</div>
+                <div class="text-xs text-purple-600">ML Coverage</div>
+                <div class="text-xs text-gray-500 mt-1">% постов с скорингом</div>
+            </div>
+        </section>
+
+        <!-- Retention -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="text-xl font-bold text-gray-900" id="retentionRate">-</div>
+                <div class="text-xs text-gray-500">Retention Rate (7d)</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="text-xl font-bold text-gray-900" id="completionRate">-</div>
+                <div class="text-xs text-gray-500">Training Completion</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="text-xl font-bold text-gray-900" id="activeUsers">-</div>
+                <div class="text-xs text-gray-500">Active Users (7d)</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="text-xl font-bold text-gray-900" id="totalUsersPeriod">-</div>
+                <div class="text-xs text-gray-500">Total Users (period)</div>
+            </div>
+        </section>
+
+        <!-- Charts -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm border p-6">
+                <h3 class="text-lg font-semibold mb-4">📈 Активность по дням</h3>
+                <canvas id="dailyChart" height="200"></canvas>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border p-6">
+                <h3 class="text-lg font-semibold mb-4">📊 Распределение оценок</h3>
+                <canvas id="interactionsChart" height="200"></canvas>
+            </div>
+        </section>
+
+        <!-- A/B Testing -->
+        <section class="bg-white rounded-xl shadow-sm border p-6 mb-8">
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold">🧪 A/B Тестирование алгоритмов</h3>
+                    <p class="text-xs text-gray-500 mt-1">Сравнение эффективности разных алгоритмов рекомендаций. Юзеры автоматически распределяются по вариантам.</p>
+                </div>
+                <div class="text-xs text-gray-400 text-right">
+                    <div>control = cosine_similarity</div>
+                    <div>treatment = hybrid алгоритм</div>
+                </div>
+            </div>
+            <div id="abTestSection" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="animate-pulse bg-gray-100 rounded-lg h-24"></div>
+            </div>
+            <div class="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
+                💡 <strong>Как это работает:</strong> Каждый новый юзер детерминированно попадает в один из вариантов (50/50 по хешу user_id). 
+                <strong>control</strong> = cosine similarity, <strong>treatment_a</strong> = hybrid (cosine + recency). 
+                Like rate показывает какой алгоритм лучше предсказывает предпочтения.
+            </div>
+        </section>
+
+        <!-- Channels Table -->
+        <section class="bg-white rounded-xl shadow-sm border p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">📺 Каналы</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-50 text-gray-600">
+                        <tr>
+                            <th class="px-4 py-3 font-medium">Канал</th>
+                            <th class="px-4 py-3 font-medium">Постов</th>
+                            <th class="px-4 py-3 font-medium">Оценок</th>
+                            <th class="px-4 py-3 font-medium">👍</th>
+                            <th class="px-4 py-3 font-medium">👎</th>
+                            <th class="px-4 py-3 font-medium">Like Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="channelsTable" class="divide-y">
+                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Загрузка...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Users Table -->
+        <section class="bg-white rounded-xl shadow-sm border p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">👥 Пользователи</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-50 text-gray-600">
+                        <tr>
+                            <th class="px-4 py-3 font-medium">Telegram ID</th>
+                            <th class="px-4 py-3 font-medium">Username</th>
+                            <th class="px-4 py-3 font-medium">Статус</th>
+                            <th class="px-4 py-3 font-medium">Язык</th>
+                            <th class="px-4 py-3 font-medium">Бонус каналов</th>
+                            <th class="px-4 py-3 font-medium">Последняя активность</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable" class="divide-y">
+                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Загрузка...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Quick Links -->
+        <section class="bg-white rounded-xl shadow-sm border p-6">
+            <h3 class="text-lg font-semibold mb-4">🔗 Быстрые ссылки</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 text-sm">
+                <a href="http://localhost:8000/docs" target="_blank" class="p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition">
+                    <div class="font-medium text-blue-700">📘 API Docs</div>
+                    <div class="text-xs text-gray-500">Swagger UI</div>
+                </a>
+                <a href="http://localhost:5050" target="_blank" class="p-3 bg-green-50 rounded-lg hover:bg-green-100 transition">
+                    <div class="font-medium text-green-700">🗄️ pgAdmin</div>
+                    <div class="text-xs text-gray-500">База данных</div>
+                </a>
+                <a href="http://localhost:6333/dashboard" target="_blank" class="p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition">
+                    <div class="font-medium text-purple-700">🔮 Qdrant</div>
+                    <div class="text-xs text-gray-500">Векторная БД</div>
+                </a>
+                <a href="http://localhost:8080" target="_blank" class="p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition">
+                    <div class="font-medium text-orange-700">📱 MiniApp</div>
+                    <div class="text-xs text-gray-500">Swipe UI</div>
+                </a>
+                <a href="http://localhost:8000/api/v1/analytics/dashboard" target="_blank" class="p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
+                    <div class="font-medium text-indigo-700">📊 Analytics API</div>
+                    <div class="text-xs text-gray-500">JSON данные</div>
+                </a>
+                <a href="http://localhost:8000/api/v1/admin/users" target="_blank" class="p-3 bg-pink-50 rounded-lg hover:bg-pink-100 transition">
+                    <div class="font-medium text-pink-700">👥 Users API</div>
+                    <div class="text-xs text-gray-500">Список юзеров</div>
+                </a>
+            </div>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="font-medium text-gray-700 mb-1">🐳 Docker команды</div>
+                    <code class="text-gray-600">docker-compose logs -f main-bot</code>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="font-medium text-gray-700 mb-1">📝 Логи API</div>
+                    <code class="text-gray-600">docker exec ppb-core-api cat /var/log/ppb/core-api.log</code>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="font-medium text-gray-700 mb-1">🔄 Перезапуск</div>
+                    <code class="text-gray-600">docker-compose restart main-bot</code>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API = 'http://localhost:8000';
+        let dailyChart, interactionsChart;
+
+        function setStatus(text, color) {
+            const el = document.getElementById('status');
+            el.textContent = text;
+            el.className = `px-3 py-1 rounded-full text-sm bg-${color}-100 text-${color}-700`;
+        }
+
+        async function fetchJSON(url) {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`${res.status}`);
+            return res.json();
+        }
+
+        async function loadHealth() {
+            const grid = document.getElementById('healthGrid');
+            let html = '';
+
+            // Core API check first
+            let coreApiOk = false;
+            try {
+                const data = await fetchJSON(`${API}/health/ready`);
+                coreApiOk = data.status === 'healthy';
+                html += renderService('Core API', coreApiOk, ':8000');
+            } catch (e) {
+                html += renderService('Core API', false, 'Недоступен');
+            }
+
+            // All other services via /health/services
+            try {
+                const s = await fetchJSON(`${API}/health/services`);
+                
+                // Infrastructure
+                html += renderService('PostgreSQL', s.postgres?.status === 'healthy', ':5432', s.postgres?.error);
+                html += renderService('Redis', s.redis?.status === 'healthy', ':6379', s.redis?.error);
+                html += renderService('Qdrant', s.qdrant?.status === 'healthy', ':6333', s.qdrant?.error);
+                
+                // Bots
+                html += renderService('User Bot', s.user_bot?.status === 'healthy', ':8001', s.user_bot?.error);
+                html += renderService('Main Bot', s.main_bot?.status === 'healthy', s.main_bot?.mode || '', s.main_bot?.error);
+                
+                // Frontend
+                html += renderService('MiniApp', s.miniapp?.status === 'healthy', ':8080', s.miniapp?.error);
+                html += renderService('pgAdmin', s.pgadmin?.status === 'healthy', ':5050', s.pgadmin?.error);
+                
+            } catch (e) {
+                html += '<div class="col-span-full text-center text-red-500">Ошибка загрузки статусов</div>';
+            }
+
+            grid.innerHTML = html;
+        }
+        
+        function renderService(name, ok, info, error) {
+            const color = ok ? 'green' : 'red';
+            const detail = ok ? info : (error || info || 'Ошибка');
+            return `
+                <div class="bg-white rounded-xl p-4 border-2 border-${color}-400">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-${color}-500 text-lg">●</span>
+                        <span class="font-medium">${name}</span>
+                    </div>
+                    <div class="text-xs ${ok ? 'text-gray-500' : 'text-red-500'}">${detail}</div>
+                </div>
+            `;
+        }
+
+        async function loadDashboard() {
+            try {
+                const data = await fetchJSON(`${API}/api/v1/analytics/dashboard`);
+
+                // Overview
+                document.getElementById('statUsers').textContent = data.overview.users.total;
+                document.getElementById('statUsersTrained').textContent = `${data.overview.users.trained} обучено (${data.overview.users.training_rate}%)`;
+                document.getElementById('statChannels').textContent = data.overview.channels.total;
+                document.getElementById('statPosts').textContent = data.overview.posts.total;
+                document.getElementById('statPostsScored').textContent = `${data.recommendations.posts_with_scores} с ML-скорингом`;
+                document.getElementById('statInteractions').textContent = data.overview.interactions.total;
+                document.getElementById('statLikeRate').textContent = `${data.overview.interactions.like_rate}% like rate`;
+                document.getElementById('statLikes').textContent = data.overview.interactions.likes;
+                document.getElementById('statDislikes').textContent = data.overview.interactions.dislikes;
+
+                // ML Metrics
+                document.getElementById('mlAvgLiked').textContent = data.recommendations.avg_liked_score.toFixed(4);
+                document.getElementById('mlAvgDisliked').textContent = data.recommendations.avg_disliked_score.toFixed(4);
+                document.getElementById('mlScoreDiff').textContent = data.recommendations.score_difference.toFixed(4);
+                document.getElementById('mlCoverage').textContent = `${data.recommendations.scoring_coverage}%`;
+
+                // Retention
+                document.getElementById('retentionRate').textContent = `${data.retention.retention_rate}%`;
+                document.getElementById('completionRate').textContent = `${data.retention.completion_rate}%`;
+                document.getElementById('activeUsers').textContent = data.retention.active_users;
+                document.getElementById('totalUsersPeriod').textContent = data.retention.total_users;
+
+                // Daily Chart (line chart)
+                if (dailyChart) dailyChart.destroy();
+                dailyChart = new Chart(document.getElementById('dailyChart'), {
+                    type: 'line',
+                    data: {
+                        labels: data.daily.map(d => d.date.slice(5)),
+                        datasets: [
+                            { label: 'Новые юзеры', data: data.daily.map(d => d.new_users), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.3 },
+                            { label: 'Оценки', data: data.daily.map(d => d.interactions), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3 }
+                        ]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+                });
+
+                // Interactions Chart
+                if (interactionsChart) interactionsChart.destroy();
+                interactionsChart = new Chart(document.getElementById('interactionsChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['👍 Лайки', '👎 Дизлайки', '⏭️ Пропуски'],
+                        datasets: [{
+                            data: [data.overview.interactions.likes, data.overview.interactions.dislikes, data.overview.interactions.skips],
+                            backgroundColor: ['#10b981', '#ef4444', '#6b7280']
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                });
+
+                // Channels
+                const chHtml = data.channels.map(ch => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            <a href="https://t.me/${ch.username}" target="_blank" class="text-blue-600 hover:underline font-medium">@${ch.username}</a>
+                            <div class="text-xs text-gray-400">${ch.title}</div>
+                        </td>
+                        <td class="px-4 py-3">${ch.posts_count}</td>
+                        <td class="px-4 py-3">${ch.interactions}</td>
+                        <td class="px-4 py-3 text-green-600">${ch.likes}</td>
+                        <td class="px-4 py-3 text-red-600">${ch.interactions - ch.likes}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 rounded text-xs font-medium ${ch.like_rate >= 50 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${ch.like_rate}%
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+                document.getElementById('channelsTable').innerHTML = chHtml || '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Нет данных</td></tr>';
+
+            } catch (e) {
+                console.error('Dashboard error:', e);
+                setStatus('● Ошибка', 'red');
+            }
+        }
+
+        async function loadABTest() {
+            try {
+                const data = await fetchJSON(`${API}/api/v1/ab-testing/results`);
+                const html = Object.entries(data.variants).map(([name, v]) => `
+                    <div class="p-4 rounded-lg ${name === 'control' ? 'bg-blue-50 border border-blue-200' : 'bg-purple-50 border border-purple-200'}">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-semibold">${name}</span>
+                            <span class="text-xs px-2 py-1 rounded bg-white shadow-sm">${v.algorithm}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div>Юзеры: <span class="font-medium">${v.users}</span></div>
+                            <div>Обучено: <span class="font-medium">${v.trained}</span></div>
+                            <div>Post-training: <span class="font-medium">${v.post_training_interactions || 0}</span></div>
+                            <div>Like rate: <span class="font-bold ${v.like_rate >= 50 ? 'text-green-600' : v.post_training_interactions > 0 ? 'text-red-600' : 'text-gray-400'}">${v.post_training_interactions > 0 ? v.like_rate + '%' : 'N/A'}</span></div>
+                        </div>
+                        ${v.note ? `<div class="text-xs text-gray-500 mt-2">${v.note}</div>` : ''}
+                    </div>
+                `).join('');
+                document.getElementById('abTestSection').innerHTML = html;
+            } catch (e) {
+                document.getElementById('abTestSection').innerHTML = '<div class="text-gray-400">Не удалось загрузить</div>';
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const data = await fetchJSON(`${API}/api/v1/admin/users?limit=50`);
+                const html = data.users.map(u => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 font-mono text-xs">${u.telegram_id}</td>
+                        <td class="px-4 py-3">${u.username ? `@${u.username}` : '-'}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 rounded text-xs font-medium ${u.is_trained ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
+                                ${u.is_trained ? '✓ Обучен' : '⏳ В процессе'}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">${u.language}</td>
+                        <td class="px-4 py-3">${u.bonus_channels_count}</td>
+                        <td class="px-4 py-3 text-xs text-gray-500">${new Date(u.last_activity_at).toLocaleString('ru')}</td>
+                    </tr>
+                `).join('');
+                document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Нет данных</td></tr>';
+            } catch (e) {
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-red-400">Ошибка загрузки</td></tr>';
+            }
+        }
+
+        async function refresh() {
+            setStatus('● Обновление...', 'yellow');
+            document.getElementById('refreshIcon').innerHTML = '<div class="loader"></div>';
+
+            try {
+                await loadHealth();
+                await loadDashboard();
+                await loadABTest();
+                await loadUsers();
+                setStatus('● Подключено', 'green');
+                document.getElementById('lastUpdate').textContent = `Обновлено: ${new Date().toLocaleTimeString('ru')}`;
+            } catch (e) {
+                console.error('Refresh error:', e);
+                setStatus('● Ошибка', 'red');
+            }
+
+            document.getElementById('refreshIcon').textContent = '🔄';
+        }
+
+        // Initial load
+        refresh();
+
+        // Auto-refresh every 60 seconds
+        setInterval(refresh, 60000);
+    </script>
+</body>
+</html>
