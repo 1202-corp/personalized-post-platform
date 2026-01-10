@@ -106,10 +106,9 @@ services:
       context: ./services/user-bot
       dockerfile: Dockerfile
     container_name: ppb-user-bot
+    env_file:
+      - .env
     environment:
-      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
-      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
-      - TELEGRAM_SESSION_STRING=${TELEGRAM_SESSION_STRING}
       - CORE_API_URL=http://core-api:8000
     ports:
       - "8001:8001"
