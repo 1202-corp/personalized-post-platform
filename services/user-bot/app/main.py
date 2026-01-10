@@ -76,6 +76,17 @@ async def lifespan(app: FastAPI):
     try:
         await client.connect()
         logger.info("Telethon client started with real-time event handler")
+        
+        # Auto-join default training channels for real-time events
+        default_channels = settings.default_training_channels
+        if default_channels:
+            channels = [c.strip().lstrip("@") for c in default_channels.split(",") if c.strip()]
+            for channel in channels:
+                try:
+                    await client.join_channel(channel)
+                    logger.info(f"Auto-joined default channel: @{channel}")
+                except Exception as e:
+                    logger.warning(f"Failed to auto-join @{channel}: {e}")
     except Exception as e:
         logger.error(f"Failed to start Telethon client: {e}")
     

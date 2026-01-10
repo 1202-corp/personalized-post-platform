@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     # Core API URL
     core_api_url: str = "http://mock-core-api:8000"
     
+    # Default training channels (comma-separated)
+    default_training_channels: str = ""
+    
     class Config:
         env_file = ".env"
         extra = "ignore"
