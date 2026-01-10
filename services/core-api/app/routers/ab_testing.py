@@ -57,3 +57,10 @@ async def get_user_variant(user_id: int):
         "variant": variant,
         "algorithm": algorithm,
     }
+
+
+@router.get("/llm-costs")
+async def get_llm_costs():
+    """Get LLM reranker cost statistics."""
+    from app.services import llm_reranker_service
+    return llm_reranker_service.get_cost_stats()

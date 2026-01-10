@@ -276,13 +276,8 @@ async def scrape_channel(request: ScrapeRequest):
         result["posts"]
     )
     
-    # Notify main-bot about new posts via Redis for real-time delivery
-    await notify_to_redis(
-        result["channel_telegram_id"],
-        result["channel_username"],
-        result["channel_title"],
-        result["posts"]
-    )
+    # NOTE: Do NOT notify via Redis here - scrape is for training/historical posts
+    # Real-time notifications happen only via Telethon event handler for NEW posts
     
     return ScrapeResponse(
         success=True,

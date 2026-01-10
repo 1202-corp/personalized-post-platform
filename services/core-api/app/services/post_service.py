@@ -293,6 +293,9 @@ async def get_best_posts_for_user(
     limit: int = 1
 ) -> List[PostWithChannel]:
     """Get best (highest relevance) posts for a user that they haven't interacted with."""
+    from app.services import ab_testing_service
+    from app.services.ab_testing_service import RecommendationAlgorithm
+    
     # Get user's interacted post IDs
     user_result = await session.execute(
         select(User).where(User.telegram_id == user_telegram_id)
@@ -315,6 +318,13 @@ async def get_best_posts_for_user(
     if not channel_ids:
         return []
     
+    # Check if user is in LLM reranker treatment group
+    algorithm = ab_testing_service.get_algorithm_for_user(user_telegram_id)
+    use_llm_reranker = algorithm == RecommendationAlgorithm.LLM_RERANKER
+    
+    # Get more candidates for LLM reranking
+    fetch_limit = limit * 5 if use_llm_reranker else limit * 3
+    
     # Get best uninteracted posts
     query = (
         select(Post, Channel)
@@ -324,14 +334,43 @@ async def get_best_posts_for_user(
             Post.relevance_score.isnot(None)
         )
         .order_by(Post.relevance_score.desc())
-        .limit(limit * 3)  # Get more to filter
+        .limit(fetch_limit)
     )
     
     result = await session.execute(query)
-    posts = []
+    candidates = []
     
     for post, channel in result.all():
-        if post.id not in interacted_post_ids and len(posts) < limit:
+        if post.id not in interacted_post_ids:
+            candidates.append({
+                'post_id': post.id,
+                'text': post.text or '',
+                'score': post.relevance_score or 0,
+                'post': post,
+                'channel': channel,
+            })
+    
+    # Apply LLM reranking if enabled for this user
+    if use_llm_reranker and len(candidates) > 0:
+        from app.services import llm_reranker_service
+        reranked = await llm_reranker_service.get_reranked_recommendations(
+            session, user_telegram_id, candidates, limit=limit
+        )
+        # Use reranked order
+        candidates = reranked
+    
+    # Build response
+    posts = []
+    for item in candidates[:limit]:
+        post = item.get('post') or await get_post_by_id(session, item['post_id'])
+        channel = item.get('channel')
+        if not channel:
+            channel_result = await session.execute(
+                select(Channel).where(Channel.id == post.channel_id)
+            )
+            channel = channel_result.scalar_one_or_none()
+        
+        if post and channel:
             posts.append(PostWithChannel(
                 id=post.id,
                 telegram_message_id=post.telegram_message_id,

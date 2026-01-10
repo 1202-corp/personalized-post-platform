@@ -378,6 +378,13 @@ class TelethonClientWrapper:
                     return
                 
                 message = event.message
+                
+                # Skip old messages (only process messages from last 60 seconds)
+                if message.date:
+                    message_age = (datetime.utcnow() - message.date.replace(tzinfo=None)).total_seconds()
+                    if message_age > 60:
+                        return
+                
                 chat = await event.get_chat()
                 
                 # Skip messages without text
@@ -400,11 +407,11 @@ class TelethonClientWrapper:
                     "posted_at": message.date.isoformat() if message.date else datetime.utcnow().isoformat(),
                 }
                 
-                # Sync to core-api
-                await self._sync_realtime_post(channel_id, channel_username, channel_title, post_data)
+                # Sync to core-api and get post_id
+                post_id = await self._sync_realtime_post(channel_id, channel_username, channel_title, post_data)
                 
                 # Notify main-bot via Redis for instant delivery
-                await self._notify_realtime_post(channel_id, channel_username, channel_title, post_data)
+                await self._notify_realtime_post(channel_id, channel_username, channel_title, post_data, post_id)
                 
             except Exception as e:
                 logger.error(f"Error handling real-time message: {e}")
@@ -412,8 +419,8 @@ class TelethonClientWrapper:
         self._event_handler_registered = True
         logger.info("Real-time event handler registered for channel posts")
     
-    async def _sync_realtime_post(self, channel_id: int, channel_username: str, channel_title: str, post_data: dict):
-        """Sync a single post to core-api."""
+    async def _sync_realtime_post(self, channel_id: int, channel_username: str, channel_title: str, post_data: dict) -> int | None:
+        """Sync a single post to core-api. Returns the created post_id."""
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 # Ensure channel exists
@@ -428,17 +435,25 @@ class TelethonClientWrapper:
                 )
                 
                 # Create post
-                await client.post(
+                response = await client.post(
                     f"{settings.core_api_url}/api/v1/posts/bulk",
                     json={
                         "channel_telegram_id": channel_id,
                         "posts": [post_data],
                     }
                 )
+                
+                # Try to get post_id from response
+                if response.status_code == 201:
+                    data = response.json()
+                    if data and "post_ids" in data and len(data["post_ids"]) > 0:
+                        return data["post_ids"][0]
+                return None
         except Exception as e:
             logger.error(f"Failed to sync real-time post: {e}")
+            return None
     
-    async def _notify_realtime_post(self, channel_id: int, channel_username: str, channel_title: str, post_data: dict):
+    async def _notify_realtime_post(self, channel_id: int, channel_username: str, channel_title: str, post_data: dict, post_id: int | None = None):
         """Notify main-bot about new post via Redis."""
         try:
             redis_client = aioredis.from_url("redis://redis:6379/0")
@@ -452,6 +467,7 @@ class TelethonClientWrapper:
                 "media_type": post_data.get("media_type"),
                 "media_file_id": post_data.get("media_file_id"),
                 "posted_at": post_data["posted_at"],
+                "post_id": post_id,
             }
             
             await redis_client.publish("ppb:new_posts", json.dumps(event_data))
