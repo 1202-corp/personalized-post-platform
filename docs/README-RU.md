@@ -46,9 +46,9 @@ Personalized Post Bot состоит из нескольких компонен�
 
 ## Компоненты
 
-- [API](../api/README.md) - Backend API с ML сервисом
-- [Bot Services](../bot/README.md) - Сервисы ботов (main-bot, user-bot)
-- [Frontend Services](../front/README.md) - Фронтенд сервисы (miniapp, admin-dashboard)
+- [API](https://github.com/1202-corp/personalized-post-api) - Backend API с ML сервисом
+- [Bot Services](https://github.com/1202-corp/personalized-post-telegram-bot) - Сервисы ботов (main-bot, user-bot)
+- [Frontend Services](https://github.com/1202-corp/personalized-post-frontend) - Фронтенд сервисы (miniapp, admin-dashboard)
 
 ## Быстрый старт
 

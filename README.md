@@ -46,9 +46,9 @@ Personalized Post Bot consists of several components that work together to provi
 
 ## Components
 
-- [API](api/README.md) - Backend API with ML service
-- [Bot Services](bot/README.md) - Bot services (main-bot, user-bot)
-- [Frontend Services](front/README.md) - Frontend services (miniapp, admin-dashboard)
+- [API](https://github.com/1202-corp/personalized-post-api) - Backend API with ML service
+- [Bot Services](https://github.com/1202-corp/personalized-post-telegram-bot) - Bot services (main-bot, user-bot)
+- [Frontend Services](https://github.com/1202-corp/personalized-post-frontend) - Frontend services (miniapp, admin-dashboard)
 
 ## Quick Start
 
