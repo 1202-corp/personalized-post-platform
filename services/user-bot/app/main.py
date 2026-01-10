@@ -121,9 +121,10 @@ async def sync_channel_to_core_api(
         return False
 
 
-async def notify_new_posts(
+async def notify_to_redis(
     channel_telegram_id: int,
     channel_username: str,
+    channel_title: str,
     posts: list
 ) -> bool:
     """Notify main-bot about new posts via Redis for real-time delivery."""
@@ -141,6 +142,7 @@ async def notify_new_posts(
             event_data = {
                 "channel_telegram_id": channel_telegram_id,
                 "channel_username": channel_username,
+                "channel_title": channel_title,
                 "telegram_message_id": post["telegram_message_id"],
                 "text": post.get("text"),
                 "media_type": post.get("media_type"),
@@ -275,9 +277,10 @@ async def scrape_channel(request: ScrapeRequest):
     )
     
     # Notify main-bot about new posts via Redis for real-time delivery
-    await notify_new_posts(
+    await notify_to_redis(
         result["channel_telegram_id"],
         result["channel_username"],
+        result["channel_title"],
         result["posts"]
     )
     

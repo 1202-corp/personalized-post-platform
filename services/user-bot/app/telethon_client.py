@@ -404,7 +404,7 @@ class TelethonClientWrapper:
                 await self._sync_realtime_post(channel_id, channel_username, channel_title, post_data)
                 
                 # Notify main-bot via Redis for instant delivery
-                await self._notify_realtime_post(channel_id, channel_username, post_data)
+                await self._notify_realtime_post(channel_id, channel_username, channel_title, post_data)
                 
             except Exception as e:
                 logger.error(f"Error handling real-time message: {e}")
@@ -438,7 +438,7 @@ class TelethonClientWrapper:
         except Exception as e:
             logger.error(f"Failed to sync real-time post: {e}")
     
-    async def _notify_realtime_post(self, channel_id: int, channel_username: str, post_data: dict):
+    async def _notify_realtime_post(self, channel_id: int, channel_username: str, channel_title: str, post_data: dict):
         """Notify main-bot about new post via Redis."""
         try:
             redis_client = aioredis.from_url("redis://redis:6379/0")
@@ -446,6 +446,7 @@ class TelethonClientWrapper:
             event_data = {
                 "channel_telegram_id": channel_id,
                 "channel_username": channel_username,
+                "channel_title": channel_title,
                 "telegram_message_id": post_data["telegram_message_id"],
                 "text": post_data.get("text"),
                 "media_type": post_data.get("media_type"),
