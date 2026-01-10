@@ -628,8 +628,27 @@ async function finishTraining() {
     // Small delay before close to ensure data is sent
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    // Close the WebApp
-    tg.close();
+    // Hide progress and close
+    tg.MainButton.hideProgress();
+    
+    // Close the WebApp (try multiple times for desktop compatibility)
+    try {
+        tg.close();
+    } catch (e) {
+        console.warn('First close attempt failed:', e);
+    }
+    
+    // Fallback: try again after short delay
+    setTimeout(() => {
+        try {
+            tg.close();
+        } catch (e) {
+            console.warn('Second close attempt failed:', e);
+            // Show success message if close doesn't work
+            tg.MainButton.setText('✓ Done! Close manually');
+            tg.MainButton.enable();
+        }
+    }, 500);
 }
 
 // Media cache for preloaded images

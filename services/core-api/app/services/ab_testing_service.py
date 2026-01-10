@@ -20,20 +20,25 @@ class RecommendationAlgorithm(str, Enum):
     POPULARITY = "popularity"  # Rank by global like count
     RECENCY = "recency"  # Most recent posts first
     HYBRID = "hybrid"  # Combination of cosine + recency
+    LLM_RERANKER = "llm_reranker"  # GPT-4o-mini reranking on top of cosine similarity
 
 
 # A/B Test configuration
 AB_TEST_CONFIG = {
     "enabled": True,
-    "test_name": "recommendation_algo_v1",
+    "test_name": "recommendation_algo_v2",
     "variants": {
         "control": {
             "algorithm": RecommendationAlgorithm.COSINE_SIMILARITY,
-            "weight": 50,  # 50% of users
+            "weight": 34,  # ~34% of users
         },
         "treatment_a": {
             "algorithm": RecommendationAlgorithm.HYBRID,
-            "weight": 50,  # 50% of users
+            "weight": 33,  # ~33% of users
+        },
+        "treatment_b": {
+            "algorithm": RecommendationAlgorithm.LLM_RERANKER,
+            "weight": 33,  # ~33% of users - GPT-4o-mini reranking
         },
     },
 }

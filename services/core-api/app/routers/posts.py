@@ -34,7 +34,7 @@ async def bulk_create_posts(
 ):
     """Bulk create posts for a channel."""
     posts = await post_service.bulk_create_posts(session, bulk_data)
-    return {"created_count": len(posts)}
+    return {"created_count": len(posts), "post_ids": [p.id for p in posts]}
 
 
 @router.get("/{post_id}", response_model=PostResponse)
