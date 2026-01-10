@@ -1,6 +1,6 @@
-# Personalized Post Bot (example: [@mmyyyyau_bot](https://t.me/mmyyyyau_bot))
+# Personalized Post Bot (пример: [@mmyyyyau_bot](https://t.me/mmyyyyau_bot))
 
-> [Русская версия](docs/README-RU.md)
+> [English version](../README.md)
 
 Telegram-бот для персонализированной агрегации новостей из каналов с использованием ML-рекомендаций на основе векторных эмбеддингов. Микросервисная архитектура на Docker Compose.
 
@@ -121,24 +121,25 @@ docker-compose up -d main-bot
 ```
 ├── docker-compose.yml          # Все сервисы
 ├── .env.example                # Пример конфигурации
-├── COMMANDS.md                 # Полезные команды
 ├── docs/
-│   ├── ARCHITECTURE.md         # Детальная архитектура
-│   └── MINIAPP_SETUP.md        # Настройка туннеля
+│   └── README-RU.md           # Русская документация
 ├── scripts/
 │   └── generate_session.py     # Генератор Telethon сессии
 ├── api/          # Бэкенд + ML
 │   └── app/
 │       ├── routers/        # API эндпоинты
 │       └── services/       # Бизнес-логика + ML
-├── main-bot/               # Telegram бот
-│   └── bot/
-│       ├── handlers/       # Обработчики команд
-│       ├── message_manager.py  # Registry Pattern
-│       └── retention.py    # Retention сервис
-├── user-bot/               # Telethon скрейпер
-├── miniapp/       # Swipe UI
-└── admin-dashboard/        # Admin dashboard
+├── bot/
+│   ├── main-bot/               # Telegram бот
+│   │   └── bot/
+│   │       ├── handlers/       # Обработчики команд
+│   │       ├── message_manager.py  # Registry Pattern
+│   │       └── retention.py    # Retention сервис
+│   └── user-bot/               # Telethon скрейпер
+│       └── app/
+├── front/
+│   ├── miniapp/       # Swipe UI
+│   └── admin-dashboard/        # Admin dashboard
 ```
 
 ## API Endpoints
@@ -164,7 +165,7 @@ docker-compose up -d main-bot
 - `POST /api/v1/posts/interactions` - Create interaction
 - `POST /api/v1/posts/best` - Get best posts
 
-#### ML (Mock)
+#### ML
 - `POST /api/v1/ml/train` - Train model
 - `POST /api/v1/ml/predict` - Get predictions
 - `GET /api/v1/ml/eligibility/{telegram_id}` - Check eligibility
@@ -209,7 +210,7 @@ docker-compose up -d main-bot
 
 ## MessageManager (Registry Pattern)
 
-The `MessageManager` class in `main-bot` implements a strict registry pattern for managing three message types:
+Класс `MessageManager` в `main-bot` реализует строгий registry pattern для управления тремя типами сообщений:
 
 |     Type    |           Behavior           |        Example       |
 |-------------|------------------------------|----------------------|
@@ -217,25 +218,25 @@ The `MessageManager` class in `main-bot` implements a strict registry pattern fo
 | `EPHEMERAL` | Deleted after interaction    | Confirmation dialogs |
 | `ONETIME`   | Kept in history | Feed posts |
 
-Key methods:
+Ключевые методы:
 - `send_system()` - Send/edit system message
 - `send_ephemeral()` - Send temporary message
 - `send_onetime()` - Send permanent feed post
 - `delete_ephemeral()` - Clean up temporary messages
 - `transition_to_system()` - Clean up and switch to system message
 
-## Development
+## Разработка
 
-### Running Tests
+### Запуск тестов
 ```bash
-# Run API tests
+# Запустить тесты API
 docker-compose exec api pytest
 
-# Run bot tests
+# Запустить тесты бота
 docker-compose exec main-bot pytest
 ```
 
-### Database Migrations (Alembic)
+### Миграции базы данных (Alembic)
 ```bash
 # Просмотр текущей версии
 docker exec ppb-api alembic current
@@ -256,7 +257,7 @@ docker exec ppb-api alembic downgrade -1
 
 ```bash
 # Просмотр логов из файла
-docker exec ppb-api cat /var/log/ppb/core-api.log
+docker exec ppb-api cat /var/log/ppb/api.log
 docker exec ppb-main-bot cat /var/log/ppb/main-bot.log
 
 # Docker логи (stdout)
@@ -267,13 +268,13 @@ docker-compose logs -f api
 ### Health Checks
 
 ```bash
-# Core API - проверка всех зависимостей
+# API - проверка всех зависимостей
 curl http://localhost:8000/health/ready
 # {"service":"api","postgres":"healthy","qdrant":"healthy","status":"healthy"}
 
 # User Bot - проверка Telethon и API
 curl http://localhost:8001/health/ready
-# {"service":"user-bot","telethon":"healthy","core_api":"healthy","status":"healthy"}
+# {"service":"user-bot","telethon":"healthy","api":"healthy","status":"healthy"}
 ```
 
 ## Полезные команды
@@ -292,6 +293,13 @@ docker exec ppb-postgres psql -U ppb_user -d ppb_db -c "TRUNCATE TABLE user_logs
 docker-compose restart main-bot
 ```
 
+## Компоненты
+
+- [API](../api/README.md) - Backend API с ML сервисом
+- [Bot Services](../bot/README.md) - Сервисы ботов (main-bot, user-bot)
+- [Frontend Services](../front/README.md) - Фронтенд сервисы (miniapp, admin-dashboard)
+
 ## Лицензия
 
 MIT
+

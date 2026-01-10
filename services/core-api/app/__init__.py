@@ -1,1 +1,0 @@
-# mock-core-api package

@@ -1,0 +1,12 @@
+[submodule "api"]
+	path = api
+	url = https://github.com/1202-corp/personalized-post-api.git
+[submodule "bot"]
+	path = bot
+	url = https://github.com/1202-corp/personalized-post-telegram-bot.git
+[submodule "front"]
+	path = front
+	url = https://github.com/1202-corp/personalized-post-frontend.git
+[submodule "docs/internal-docs"]
+	path = docs/internal-docs
+	url = https://github.com/1202-corp/personalized-post-internal-docs.git

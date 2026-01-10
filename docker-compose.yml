@@ -44,11 +44,11 @@ services:
     networks:
       - ppb-network
 
-  core-api:
+  api:
     build:
-      context: ./services/core-api
+      context: ./api
       dockerfile: Dockerfile
-    container_name: ppb-core-api
+    container_name: ppb-api
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ppb_user}:${POSTGRES_PASSWORD:-ppb_secret}@postgres:5432/${POSTGRES_DB:-ppb_db}
       - REDIS_URL=redis://redis:6379/0
@@ -76,14 +76,14 @@ services:
 
   main-bot:
     build:
-      context: ./services/main-bot
+      context: ./bot/main-bot
       dockerfile: Dockerfile
     container_name: ppb-main-bot
     env_file:
       - .env
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - CORE_API_URL=http://core-api:8000
+      - CORE_API_URL=http://api:8000
       - USER_BOT_URL=http://user-bot:8001
       - REDIS_URL=redis://redis:6379/1
       - MINIAPP_URL=${MINIAPP_URL:-http://localhost:8080}
@@ -95,7 +95,7 @@ services:
     volumes:
       - logs_data:/var/log/ppb
     depends_on:
-      - core-api
+      - api
       - redis
     restart: unless-stopped
     networks:
@@ -103,30 +103,30 @@ services:
 
   user-bot:
     build:
-      context: ./services/user-bot
+      context: ./bot/user-bot
       dockerfile: Dockerfile
     container_name: ppb-user-bot
     env_file:
       - .env
     environment:
-      - CORE_API_URL=http://core-api:8000
+      - CORE_API_URL=http://api:8000
     ports:
       - "8001:8001"
     depends_on:
-      - core-api
+      - api
     restart: unless-stopped
     networks:
       - ppb-network
 
-  frontend-miniapp:
+  miniapp:
     build:
-      context: ./services/frontend-miniapp
+      context: ./front/miniapp
       dockerfile: Dockerfile
     container_name: ppb-miniapp
     ports:
       - "8080:80"
     depends_on:
-      - core-api
+      - api
     networks:
       - ppb-network
 
@@ -151,13 +151,13 @@ services:
 
   admin-dashboard:
     build:
-      context: ./services/admin-dashboard
+      context: ./front/admin-dashboard
       dockerfile: Dockerfile
     container_name: ppb-admin
     ports:
       - "3000:80"
     depends_on:
-      - core-api
+      - api
     restart: unless-stopped
     networks:
       - ppb-network
