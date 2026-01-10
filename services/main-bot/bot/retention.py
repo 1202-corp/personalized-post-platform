@@ -189,7 +189,7 @@ class RetentionService:
         # Get default training channels
         from bot.config import get_settings
         settings = get_settings()
-        default_channels = [c.lstrip("@").lower() for c in settings.default_training_channels]
+        default_channels = [c.strip().lstrip("@").lower() for c in settings.default_training_channels.split(",") if c.strip()]
         
         for user in users:
             user_id = user.get("telegram_id")
@@ -226,26 +226,80 @@ class RetentionService:
     async def _send_realtime_post_direct(self, user_id: int, post_data: dict):
         """Send a new post directly to user (from Redis data)."""
         try:
-            lang = await get_core_api().get_user_language(user_id)
+            api = get_core_api()
+            user_bot = get_user_bot()
+            lang = await api.get_user_language(user_id)
             
             channel_username = (post_data.get("channel_username") or "").lstrip("@")
+            channel_title = post_data.get("channel_title") or channel_username
             msg_id = post_data.get("telegram_message_id")
+            post_id = post_data.get("post_id") or post_data.get("id")
             text = escape_md(post_data.get("text") or "")[:500]
+            media_type = post_data.get("media_type")
             
             # Build header with link to original post
             if channel_username and msg_id:
-                header = f"📰 [{escape_md(channel_username)}](https://t.me/{channel_username}/{msg_id})\n\n"
+                header = f"📰 [{escape_md(channel_title)}](https://t.me/{channel_username}/{msg_id})\n\n"
             else:
-                header = f"📰 *{escape_md(channel_username)}*\n\n"
+                header = f"📰 *{escape_md(channel_title)}*\n\n"
             
-            post_text = header + text
+            post_text = header + (text if text else "_[Media content]_")
+            caption_fits = len(post_text) <= TELEGRAM_CAPTION_LIMIT
+            sent_with_caption = False
             
-            # Send without rating buttons (post may not be in DB yet)
-            await self.message_manager.send_onetime(
-                user_id,
-                post_text,
-                tag="realtime_post",
-            )
+            # Try to send with media
+            if media_type == "photo" and channel_username and msg_id:
+                try:
+                    photo_bytes = await user_bot.get_photo(channel_username, msg_id)
+                    if photo_bytes:
+                        if caption_fits:
+                            await self.message_manager.send_onetime(
+                                user_id,
+                                post_text,
+                                reply_markup=get_feed_post_keyboard(post_id, lang) if post_id else None,
+                                tag="realtime_post",
+                                photo_bytes=photo_bytes,
+                                photo_filename=f"{msg_id}.jpg",
+                            )
+                            sent_with_caption = True
+                        else:
+                            input_file = BufferedInputFile(photo_bytes, filename=f"{msg_id}.jpg")
+                            await self.message_manager.bot.send_photo(
+                                chat_id=user_id,
+                                photo=input_file,
+                            )
+                except Exception as e:
+                    logger.warning(f"Failed to get photo for realtime post: {e}")
+            
+            elif media_type == "video" and channel_username and msg_id:
+                try:
+                    video_bytes = await user_bot.get_video(channel_username, msg_id)
+                    if video_bytes:
+                        input_file = BufferedInputFile(video_bytes, filename=f"{msg_id}.mp4")
+                        if caption_fits:
+                            await self.message_manager.bot.send_video(
+                                chat_id=user_id,
+                                video=input_file,
+                                caption=post_text,
+                                parse_mode="Markdown",
+                                reply_markup=get_feed_post_keyboard(post_id, lang) if post_id else None,
+                            )
+                            sent_with_caption = True
+                        else:
+                            await self.message_manager.bot.send_video(
+                                chat_id=user_id,
+                                video=input_file,
+                            )
+                except Exception as e:
+                    logger.warning(f"Failed to get video for realtime post: {e}")
+            
+            if not sent_with_caption:
+                await self.message_manager.send_onetime(
+                    user_id,
+                    post_text,
+                    reply_markup=get_feed_post_keyboard(post_id, lang) if post_id else None,
+                    tag="realtime_post",
+                )
             logger.info(f"Sent real-time post to user {user_id}")
         except Exception as e:
             logger.error(f"Error sending real-time post to {user_id}: {e}")
