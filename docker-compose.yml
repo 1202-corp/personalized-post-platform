@@ -113,7 +113,7 @@ services:
       - REDIS_URL=redis://redis:6379/1
       - MINIAPP_URL=${MINIAPP_URL:-http://localhost:8080}
       - DEFAULT_TRAINING_CHANNELS=${DEFAULT_TRAINING_CHANNELS:-@durov,@telegram}
-      - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}
+      - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en_US}
       - LOG_DIR=/var/log/ppb
     volumes:
       - logs_data:/var/log/ppb
