@@ -36,7 +36,6 @@ class User(Base):
     bonus_channels_count: Mapped[int] = mapped_column(default=0)
     initial_best_post_sent: Mapped[bool] = mapped_column(Boolean, default=False)
     language: Mapped[str] = mapped_column(String(10), default="en_US")
-    last_nudge_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
     # ML preference vector cache (computed from user's liked/disliked posts)
     preference_vector_cache: Mapped[Optional[List[float]]] = mapped_column(JSON, nullable=True)
