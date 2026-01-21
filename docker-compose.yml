@@ -9,7 +9,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ppb_user} -d ${POSTGRES_DB:-ppb_db}"]
       interval: 5s
@@ -22,7 +22,7 @@ services:
     image: redis:7-alpine
     container_name: ppb-redis
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -33,14 +33,19 @@ services:
     networks:
       - ppb-network
 
-  qdrant:
+  vector-db-qdrant:
     image: qdrant/qdrant:latest
-    container_name: ppb-qdrant
+    container_name: ppb-vector-db-qdrant
     ports:
-      - "6333:6333"
-      - "6334:6334"
+      - "${QDRANT_PORT:-6333}:6333"
+      - "${QDRANT_GRPC_PORT:-6334}:6334"
     volumes:
-      - qdrant_data:/qdrant/storage
+      - vector_db_qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:6333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - ppb-network
 
@@ -54,20 +59,42 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DEBUG=${DEBUG:-false}
       - DEFAULT_TRAINING_CHANNELS=${DEFAULT_TRAINING_CHANNELS:-@durov,@telegram}
-      - OPENAI_API_BASE=${OPENAI_API_BASE:-https://bothub.chat/api/v2/openai/v1}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-text-embedding-ada-002}
-      - QDRANT_HOST=${QDRANT_HOST:-qdrant}
-      - QDRANT_PORT=${QDRANT_PORT:-6333}
+      - ML_SERVICE_URL=${ML_SERVICE_URL:-http://ml-service:8002}
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-      qdrant:
+      ml-service:
         condition: service_started
+    restart: unless-stopped
+    networks:
+      - ppb-network
+    volumes:
+      - logs_data:/var/log/ppb
+
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: ppb-ml-service
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ppb_user}:${POSTGRES_PASSWORD:-ppb_secret}@postgres:5432/${POSTGRES_DB:-ppb_db}
+      - DEBUG=${DEBUG:-false}
+      - OPENAI_API_BASE=${OPENAI_API_BASE:-https://bothub.chat/api/v2/openai/v1}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-text-embedding-ada-002}
+      - QDRANT_HOST=${QDRANT_HOST:-vector-db-qdrant}
+      - QDRANT_PORT=${QDRANT_PORT:-6333}
+    ports:
+      - "${ML_SERVICE_PORT:-8002}:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      vector-db-qdrant:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - ppb-network
@@ -83,8 +110,8 @@ services:
       - .env
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - CORE_API_URL=http://api:8000
-      - USER_BOT_URL=http://user-bot:8001
+      - CORE_API_URL=${CORE_API_URL:-http://api:8000}
+      - USER_BOT_URL=${USER_BOT_URL:-http://user-bot:8001}
       - REDIS_URL=redis://redis:6379/1
       - MINIAPP_URL=${MINIAPP_URL:-http://localhost:8080}
       - RETENTION_CHECK_INTERVAL=${RETENTION_CHECK_INTERVAL:-300}
@@ -109,9 +136,9 @@ services:
     env_file:
       - .env
     environment:
-      - CORE_API_URL=http://api:8000
+      - CORE_API_URL=${CORE_API_URL:-http://api:8000}
     ports:
-      - "8001:8001"
+      - "${USER_BOT_PORT:-8001}:8001"
     depends_on:
       - api
     restart: unless-stopped
@@ -124,7 +151,7 @@ services:
       dockerfile: Dockerfile
     container_name: ppb-miniapp
     ports:
-      - "8080:80"
+      - "${MINIAPP_PORT:-8080}:80"
     depends_on:
       - api
     networks:
@@ -140,7 +167,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
       PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
-      - "5050:80"
+      - "${PGADMIN_PORT:-5050}:80"
     depends_on:
       - postgres
     restart: unless-stopped
@@ -155,7 +182,7 @@ services:
       dockerfile: Dockerfile
     container_name: ppb-admin
     ports:
-      - "3000:80"
+      - "${ADMIN_DASHBOARD_PORT:-3000}:80"
     depends_on:
       - api
     restart: unless-stopped
@@ -165,7 +192,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  qdrant_data:
+  vector_db_qdrant_data:
   pgadmin_data:
   logs_data:
 
