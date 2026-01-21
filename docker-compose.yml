@@ -81,6 +81,9 @@ services:
     container_name: ppb-ml-service
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ppb_user}:${POSTGRES_PASSWORD:-ppb_secret}@postgres:5432/${POSTGRES_DB:-ppb_db}
+      - USE_LOCAL_EMBEDDINGS=${USE_LOCAL_EMBEDDINGS:-false}
+      - LOCAL_EMBEDDING_MODEL_URL=${LOCAL_EMBEDDING_MODEL_URL:-http://localhost:11434/api/embeddings}
+      - LOCAL_EMBEDDING_MODEL=${LOCAL_EMBEDDING_MODEL:-all-minilm}
       - OPENAI_API_BASE=${OPENAI_API_BASE:-https://bothub.chat/api/v2/openai/v1}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-text-embedding-ada-002}
