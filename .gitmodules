@@ -10,3 +10,6 @@
 [submodule "docs/internal-docs"]
 	path = docs/internal-docs
 	url = https://github.com/1202-corp/personalized-post-internal-docs.git
+[submodule "ml-service"]
+	path = ml-service
+	url = https://github.com/1202-corp/personalized-post-ml-service.git
