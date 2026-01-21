@@ -176,23 +176,6 @@ services:
 
   # tunnel: removed - using nginx reverse proxy instead
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: ppb-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@localhost.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-    ports:
-      - "${PGADMIN_PORT:-5050}:80"
-    depends_on:
-      - postgres
-    restart: unless-stopped
-    networks:
-      - ppb-network
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-
   admin-dashboard:
     build:
       context: ./front/admin-dashboard
@@ -210,7 +193,6 @@ volumes:
   postgres_data:
   redis_data:
   vector_db_qdrant_data:
-  pgadmin_data:
   logs_data:
   ollama_data:
 
