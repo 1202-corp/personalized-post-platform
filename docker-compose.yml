@@ -57,7 +57,6 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ppb_user}:${POSTGRES_PASSWORD:-ppb_secret}@postgres:5432/${POSTGRES_DB:-ppb_db}
       - REDIS_URL=redis://redis:6379/0
-      - DEBUG=${DEBUG:-false}
       - DEFAULT_TRAINING_CHANNELS=${DEFAULT_TRAINING_CHANNELS:-@durov,@telegram}
       - ML_SERVICE_URL=${ML_SERVICE_URL:-http://ml-service:8002}
     ports:
@@ -82,7 +81,6 @@ services:
     container_name: ppb-ml-service
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ppb_user}:${POSTGRES_PASSWORD:-ppb_secret}@postgres:5432/${POSTGRES_DB:-ppb_db}
-      - DEBUG=${DEBUG:-false}
       - OPENAI_API_BASE=${OPENAI_API_BASE:-https://bothub.chat/api/v2/openai/v1}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-text-embedding-ada-002}
@@ -117,7 +115,7 @@ services:
       - RETENTION_CHECK_INTERVAL=${RETENTION_CHECK_INTERVAL:-300}
       - RETENTION_SILENCE_THRESHOLD=${RETENTION_SILENCE_THRESHOLD:-600}
       - DEFAULT_TRAINING_CHANNELS=${DEFAULT_TRAINING_CHANNELS:-@durov,@telegram}
-      - LANGUAGE=${LANGUAGE:-en}
+      - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}
       - LOG_DIR=/var/log/ppb
     volumes:
       - logs_data:/var/log/ppb
