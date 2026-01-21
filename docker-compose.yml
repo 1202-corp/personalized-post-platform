@@ -49,6 +49,22 @@ services:
     networks:
       - ppb-network
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ppb-ollama
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ppb-network
+    restart: unless-stopped
+
   api:
     build:
       context: ./api
@@ -82,7 +98,7 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ppb_user}:${POSTGRES_PASSWORD:-ppb_secret}@postgres:5432/${POSTGRES_DB:-ppb_db}
       - USE_LOCAL_EMBEDDINGS=${USE_LOCAL_EMBEDDINGS:-false}
-      - LOCAL_EMBEDDING_MODEL_URL=${LOCAL_EMBEDDING_MODEL_URL:-http://localhost:11434/api/embeddings}
+      - LOCAL_EMBEDDING_MODEL_URL=${LOCAL_EMBEDDING_MODEL_URL:-http://ollama:11434/api/embeddings}
       - LOCAL_EMBEDDING_MODEL=${LOCAL_EMBEDDING_MODEL:-all-minilm}
       - OPENAI_API_BASE=${OPENAI_API_BASE:-https://bothub.chat/api/v2/openai/v1}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -96,6 +112,8 @@ services:
         condition: service_healthy
       vector-db-qdrant:
         condition: service_healthy
+      ollama:
+        condition: service_started
     restart: unless-stopped
     networks:
       - ppb-network
@@ -194,6 +212,7 @@ volumes:
   vector_db_qdrant_data:
   pgadmin_data:
   logs_data:
+  ollama_data:
 
 networks:
   ppb-network:
