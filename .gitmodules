@@ -13,3 +13,4 @@
 [submodule "ml-service"]
 	path = ml-service
 	url = https://github.com/1202-corp/personalized-post-ml-service.git
+	branch = dev
