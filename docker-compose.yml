@@ -1,26 +1,26 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: ppb-postgres
+    container_name: ppp-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-ppb_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ppb_secret}
-      POSTGRES_DB: ${POSTGRES_DB:-ppb_db}
+      POSTGRES_USER: ${POSTGRES_USER:-ppp_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ppp_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-ppp_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ppb_user} -d ${POSTGRES_DB:-ppb_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ppp_user} -d ${POSTGRES_DB:-ppp_db}"]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
-      - ppb-network
+      - ppp-network
 
   redis:
     image: redis:7-alpine
-    container_name: ppb-redis
+    container_name: ppp-redis
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
@@ -31,11 +31,11 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - ppb-network
+      - ppp-network
 
   vector-db-qdrant:
     image: qdrant/qdrant:latest
-    container_name: ppb-vector-db-qdrant
+    container_name: ppp-vector-db-qdrant
     ports:
       - "${QDRANT_PORT:-6333}:6333"
       - "${QDRANT_GRPC_PORT:-6334}:6334"
@@ -47,11 +47,11 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - ppb-network
+      - ppp-network
 
   ollama:
     image: ollama/ollama:latest
-    container_name: ppb-ollama
+    container_name: ppp-ollama
     ports:
       - "${OLLAMA_PORT:-11434}:11434"
     volumes:
@@ -62,16 +62,16 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - ppb-network
+      - ppp-network
     restart: unless-stopped
 
   api:
     build:
       context: ./api
       dockerfile: Dockerfile
-    container_name: ppb-api
+    container_name: ppp-api
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ppb_user}:${POSTGRES_PASSWORD:-ppb_secret}@postgres:5432/${POSTGRES_DB:-ppb_db}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ppp_user}:${POSTGRES_PASSWORD:-ppp_secret}@postgres:5432/${POSTGRES_DB:-ppp_db}
       - REDIS_URL=redis://redis:6379/0
       - DEFAULT_TRAINING_CHANNELS=${DEFAULT_TRAINING_CHANNELS:-@durov,@telegram}
       - ML_SERVICE_URL=${ML_SERVICE_URL:-http://ml-service:8002}
@@ -86,17 +86,17 @@ services:
         condition: service_started
     restart: unless-stopped
     networks:
-      - ppb-network
+      - ppp-network
     volumes:
-      - logs_data:/var/log/ppb
+      - logs_data:/var/log/ppp
 
   ml-service:
     build:
       context: ./ml-service
       dockerfile: Dockerfile
-    container_name: ppb-ml-service
+    container_name: ppp-ml-service
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ppb_user}:${POSTGRES_PASSWORD:-ppb_secret}@postgres:5432/${POSTGRES_DB:-ppb_db}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ppp_user}:${POSTGRES_PASSWORD:-ppp_secret}@postgres:5432/${POSTGRES_DB:-ppp_db}
       - USE_LOCAL_EMBEDDINGS=${USE_LOCAL_EMBEDDINGS:-false}
       - LOCAL_EMBEDDING_MODEL_URL=${LOCAL_EMBEDDING_MODEL_URL:-http://ollama:11434/api/embeddings}
       - LOCAL_EMBEDDING_MODEL=${LOCAL_EMBEDDING_MODEL:-all-minilm}
@@ -116,15 +116,15 @@ services:
         condition: service_started
     restart: unless-stopped
     networks:
-      - ppb-network
+      - ppp-network
     volumes:
-      - logs_data:/var/log/ppb
+      - logs_data:/var/log/ppp
 
   main-bot:
     build:
       context: ./bot/main-bot
       dockerfile: Dockerfile
-    container_name: ppb-main-bot
+    container_name: ppp-main-bot
     env_file:
       - .env
     environment:
@@ -135,21 +135,21 @@ services:
       - MINIAPP_URL=${MINIAPP_URL:-http://localhost:8080}
       - DEFAULT_TRAINING_CHANNELS=${DEFAULT_TRAINING_CHANNELS:-@durov,@telegram}
       - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en_US}
-      - LOG_DIR=/var/log/ppb
+      - LOG_DIR=/var/log/ppp
     volumes:
-      - logs_data:/var/log/ppb
+      - logs_data:/var/log/ppp
     depends_on:
       - api
       - redis
     restart: unless-stopped
     networks:
-      - ppb-network
+      - ppp-network
 
   user-bot:
     build:
       context: ./bot/user-bot
       dockerfile: Dockerfile
-    container_name: ppb-user-bot
+    container_name: ppp-user-bot
     env_file:
       - .env
     environment:
@@ -160,19 +160,19 @@ services:
       - api
     restart: unless-stopped
     networks:
-      - ppb-network
+      - ppp-network
 
   miniapp:
     build:
       context: ./front/miniapp
       dockerfile: Dockerfile
-    container_name: ppb-miniapp
+    container_name: ppp-miniapp
     ports:
       - "${MINIAPP_PORT:-8080}:80"
     depends_on:
       - api
     networks:
-      - ppb-network
+      - ppp-network
 
   # tunnel: removed - using nginx reverse proxy instead
 
@@ -180,14 +180,16 @@ services:
     build:
       context: ./front/admin-dashboard
       dockerfile: Dockerfile
-    container_name: ppb-admin
+    container_name: ppp-admin
     ports:
-      - "${ADMIN_DASHBOARD_PORT:-3000}:80"
+      - "${ADMIN_DASHBOARD_PORT:-10304}:80"
+    environment:
+      - VITE_API_URL=http://api:8000/api/v1
     depends_on:
       - api
     restart: unless-stopped
     networks:
-      - ppb-network
+      - ppp-network
 
 volumes:
   postgres_data:
@@ -197,5 +199,5 @@ volumes:
   ollama_data:
 
 networks:
-  ppb-network:
+  ppp-network:
     driver: bridge
