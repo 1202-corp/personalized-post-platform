@@ -42,7 +42,7 @@ services:
     volumes:
       - vector_db_qdrant_data:/qdrant/storage
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:6333/health"]
+      test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/6333' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -70,6 +70,8 @@ services:
       context: ./api
       dockerfile: Dockerfile
     container_name: ppp-api
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ppp_user}:${POSTGRES_PASSWORD:-ppp_secret}@postgres:5432/${POSTGRES_DB:-ppp_db}
       - REDIS_URL=redis://redis:6379/0
@@ -173,8 +175,6 @@ services:
       - api
     networks:
       - ppp-network
-
-  # tunnel: removed - using nginx reverse proxy instead
 
   admin-dashboard:
     build:
