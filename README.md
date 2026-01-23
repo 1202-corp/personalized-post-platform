@@ -100,7 +100,7 @@ docker-compose logs -f main-bot
 | http://localhost:8080 | MiniApp (locally) |
 | http://localhost:8001/docs | User Bot API |
 | http://localhost:5050 | pgAdmin (database) |
-| http://localhost:6333/dashboard | Qdrant UI |
+| http://localhost:10309/dashboard | Qdrant UI |
 
 ## User Flow (AARRR)
 
