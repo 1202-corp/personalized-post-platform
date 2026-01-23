@@ -37,8 +37,8 @@ services:
     image: qdrant/qdrant:latest
     container_name: ppp-vector-db-qdrant
     ports:
-      - "${QDRANT_PORT:-6333}:6333"
-      - "${QDRANT_GRPC_PORT:-6334}:6334"
+      - "${QDRANT_EXTERNAL_PORT:-10309}:6333"
+      - "${QDRANT_EXTERNAL_GRPC_PORT:-10310}:6334"
     volumes:
       - vector_db_qdrant_data:/qdrant/storage
     healthcheck:
@@ -106,7 +106,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-text-embedding-ada-002}
       - QDRANT_HOST=${QDRANT_HOST:-vector-db-qdrant}
-      - QDRANT_PORT=${QDRANT_PORT:-6333}
+      - QDRANT_PORT=6333
     ports:
       - "${ML_SERVICE_PORT:-8002}:8002"
     depends_on:
@@ -136,7 +136,10 @@ services:
       - REDIS_URL=redis://redis:6379/1
       - MINIAPP_URL=${MINIAPP_URL:-http://localhost:8080}
       - DEFAULT_TRAINING_CHANNELS=${DEFAULT_TRAINING_CHANNELS:-@durov,@telegram}
+      - POSTS_PER_CHANNEL=${POSTS_PER_CHANNEL:-7}
+      - MIN_INTERACTIONS_FOR_TRAINING=${MIN_INTERACTIONS_FOR_TRAINING:-5}
       - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en_US}
+      - SUPPORTED_LANGUAGES=${SUPPORTED_LANGUAGES:-en_US,ru_RU}
       - LOG_DIR=/var/log/ppp
     volumes:
       - logs_data:/var/log/ppp
