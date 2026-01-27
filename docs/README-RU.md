@@ -27,7 +27,7 @@ Personalized Post Bot состоит из нескольких компонен�
 
 ```
 ┌─────────────────┐     HTTP/REST      ┌──────────────────┐     Vectors     ┌──────────────┐
-│   main-bot      │◄──────────────────►│       api       │◄───────────────►│    Qdrant    │
+│   main-bot      │◄──────────────────►│       api        │◄───────────────►│    Qdrant    │
 │   (Aiogram 3)   │                    │  (FastAPI + ML)  │                 │  (embeddings)│
 └────────┬────────┘                    └────────┬─────────┘                 └──────────────┘
          │                                      │
@@ -36,10 +36,10 @@ Personalized Post Bot состоит из нескольких компонен�
 ┌─────────────────┐                    ┌──────────────────┐
 │   user-bot      │                    │    postgres      │
 │   (Telethon)    │                    │                  │
-└────────────────┘                    └──────────────────┘
+└─────────────────┘                    └──────────────────┘
          
 ┌─────────────────┐
-│ miniapp│
+│ miniapp         │
 │   (HTML/JS)     │
 └─────────────────┘
 ```
@@ -67,13 +67,13 @@ nano .env
 ```
 
 **Обязательные переменные:**
-| Переменная | Описание |
-|-----------|----------|
-| `TELEGRAM_BOT_TOKEN` | Токен бота от BotFather |
-| `TELEGRAM_API_ID` | API ID от my.telegram.org |
-| `TELEGRAM_API_HASH` | API Hash от my.telegram.org |
+| Переменная                | Описание |
+|---------------------------|----------|
+| `TELEGRAM_BOT_TOKEN`      | Токен бота от BotFather |
+| `TELEGRAM_API_ID`         | API ID от my.telegram.org |
+| `TELEGRAM_API_HASH`       | API Hash от my.telegram.org |
 | `TELEGRAM_SESSION_STRING` | Сессия Telethon (см. ниже) |
-| `OPENAI_API_KEY` | API ключ для эмбеддингов |
+| `OPENAI_API_KEY`          | API ключ для эмбеддингов |
 
 ### Генерация Telethon Session
 
@@ -94,8 +94,8 @@ docker-compose logs -f main-bot
 
 ### Доступ к сервисам
 
-| URL | Описание |
-|-----|----------|
+| URL                   | Описание |
+|-----------------------|----------|
 | http://localhost:8000/docs | API документация |
 | http://localhost:8080 | MiniApp (локально) |
 | http://localhost:8001/docs | User Bot API |
