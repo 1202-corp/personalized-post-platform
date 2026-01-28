@@ -183,11 +183,11 @@ services:
     build:
       context: ./front/admin-dashboard
       dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:10300/api/v1}
     container_name: ppp-admin
     ports:
       - "${ADMIN_DASHBOARD_PORT:-10304}:80"
-    environment:
-      - VITE_API_URL=http://api:8000/api/v1
     depends_on:
       - api
     restart: unless-stopped
