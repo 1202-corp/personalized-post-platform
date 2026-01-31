@@ -183,6 +183,8 @@ services:
       - CORE_API_URL=${CORE_API_URL:-http://api:8000}
     ports:
       - "${USER_BOT_PORT:-8001}:8001"
+    volumes:
+      - ./sessions:/app/sessions
     depends_on:
       - api
     restart: unless-stopped

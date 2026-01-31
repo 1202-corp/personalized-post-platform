@@ -59,6 +59,7 @@ logs/
 .docker/
 
 # Telethon sessions
+sessions/
 *.session
 *.session-journal
 
