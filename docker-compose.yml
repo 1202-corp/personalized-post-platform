@@ -153,7 +153,7 @@ services:
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - CORE_API_URL=${CORE_API_URL:-http://api:8000}
-      - USER_BOT_URL=${USER_BOT_URL:-http://user-bot:8001}
+      - USER_BOT_URL=${USER_BOT_URL:-http://channels-scraper:8002}
       - REDIS_URL=redis://redis:6379/1
       - MINIAPP_URL=${MINIAPP_URL:-http://localhost:8080}
       - DEFAULT_TRAINING_CHANNELS=${DEFAULT_TRAINING_CHANNELS:-@durov,@telegram}
@@ -168,25 +168,27 @@ services:
     depends_on:
       - api
       - redis
+      - channels-scraper
     restart: unless-stopped
     networks:
       - ppp-network
 
-  user-bot:
+  channels-scraper:
     build:
-      context: ./bot/user-bot
+      context: ./bot/channels-scraper
       dockerfile: Dockerfile
-    container_name: ppp-user-bot
+    container_name: ppp-channels-scraper
     env_file:
       - .env
     environment:
       - CORE_API_URL=${CORE_API_URL:-http://api:8000}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - POLL_INTERVAL_SEC=${CHANNELS_SCRAPER_POLL_INTERVAL_SEC:-90}
     ports:
-      - "${USER_BOT_PORT:-8001}:8001"
-    volumes:
-      - ./sessions:/app/sessions
+      - "${CHANNELS_SCRAPER_PORT:-8002}:8002"
     depends_on:
       - api
+      - redis
     restart: unless-stopped
     networks:
       - ppp-network
