@@ -1,15 +1,20 @@
 [submodule "api"]
 	path = api
 	url = https://github.com/1202-corp/personalized-post-api.git
+	branch = dev
 [submodule "bot"]
 	path = bot
 	url = https://github.com/1202-corp/personalized-post-telegram-bot.git
+	branch = dev
 [submodule "front"]
 	path = front
 	url = https://github.com/1202-corp/personalized-post-frontend.git
+	branch = dev
 [submodule "docs/internal-docs"]
 	path = docs/internal-docs
 	url = https://github.com/1202-corp/personalized-post-internal-docs.git
+	branch = dev
 [submodule "ml-service"]
 	path = ml-service
 	url = https://github.com/1202-corp/personalized-post-ml-service.git
+	branch = dev
