@@ -1,15 +1,20 @@
 [submodule "api"]
 	path = api
-	url = https://github.com/1202-corp/personalized-post-api.git
+	url = https://github.com/1202-modules/personalized-post-api.git
+	branch = legacy/mvp
 [submodule "bot"]
 	path = bot
-	url = https://github.com/1202-corp/personalized-post-telegram-bot.git
+	url = https://github.com/1202-modules/personalized-post-telegram-bot.git
+	branch = legacy/mvp
 [submodule "front"]
 	path = front
-	url = https://github.com/1202-corp/personalized-post-frontend.git
+	url = https://github.com/1202-modules/personalized-post-frontend.git
+	branch = legacy/mvp
 [submodule "docs/internal-docs"]
 	path = docs/internal-docs
-	url = https://github.com/1202-corp/personalized-post-internal-docs.git
+	url = https://github.com/1202-modules/personalized-post-internal-docs.git
+	branch = legacy/mvp
 [submodule "ml-service"]
 	path = ml-service
-	url = https://github.com/1202-corp/personalized-post-ml-service.git
+	url = https://github.com/1202-modules/personalized-post-ml-service.git
+	branch = legacy/mvp
